@@ -1,9 +1,18 @@
+// --------------------------------------------------------------------------------
+//  Project: hangman-rust
+//  File: main.rs
+//  Name: @nsubba27
+//  Date: Nov 25, 2025
+//  Description: A game of hangman that you can play from command line build using rust language
+// --------------------------------------------------------------------------------
+
 use rand::Rng;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io;
 use std::io::BufRead;
 
+/// global constant to hold lives at different stages
 const STAGES: [&str; 7] = [
     r"
   +---+
@@ -70,6 +79,15 @@ const STAGES: [&str; 7] = [
 ",
 ];
 
+/// Reads a comma-separated `.txt` file and loads the word categories into a `HashMap<String, Vec<String>>`.
+///
+/// # Parameters
+/// - `path`: Path to the words file.
+/// - `bank`: Mutable reference to the HashMap that will store all categories and word lists.
+///
+/// # Returns
+/// - `Ok(())` on success
+/// - `Err(io::Error)` if file cannot be read
 fn read_file(path: &str, bank: &mut HashMap<String, Vec<String>>) -> io::Result<()> {
     let file = File::open(path)?;
     let reader = io::BufReader::new(file);
@@ -103,6 +121,13 @@ fn read_file(path: &str, bank: &mut HashMap<String, Vec<String>>) -> io::Result<
     Ok(())
 }
 
+/// Creates a vector of `"_"` placeholders matching the length of the word.
+///
+/// # Parameters
+/// - `word`: The hidden word.
+///
+/// # Returns
+/// - Vector of underscores representing unrevealed letters.
 fn print_blanks(word: &str) -> Vec<String> {
     if word.is_empty() {
         return Vec::new();
@@ -112,6 +137,15 @@ fn print_blanks(word: &str) -> Vec<String> {
     word.chars().map(|_| "_".to_string()).collect()
 }
 
+/// Returns all the positions (indices) where a character occurs within a word.
+///
+/// # Parameters
+/// - `word`: The target word.
+/// - `letter`: The guessed character.
+///
+/// # Returns
+/// - `Some(Vec<usize>)` containing all indexes where the letter appears.
+/// - `None` if the letter does not appear.
 fn char_index(word: &str, letter: char) -> Option<Vec<usize>> {
     let mut indexes = Vec::new();
 
@@ -127,6 +161,15 @@ fn char_index(word: &str, letter: char) -> Option<Vec<usize>> {
     Some(indexes)
 }
 
+/// Checks whether a guessed letter exists anywhere inside the word.
+///
+/// # Parameters
+/// - `word`: The target word.
+/// - `letter`: The guessed character.
+///
+/// # Returns
+/// - `true` if `letter` exists in the word.
+/// - `false` otherwise.
 fn check_letter_in_word(word: &str, letter: char) -> bool {
     for c in word.chars() {
         if c == letter {
@@ -137,6 +180,12 @@ fn check_letter_in_word(word: &str, letter: char) -> bool {
     false
 }
 
+/// Updates the blanks vector with correctly guessed letters using their positions.
+///
+/// # Parameters
+/// - `blanks`: Mutable reference to the blanks vector.
+/// - `letter`: The guessed character.
+/// - `indexes`: Optional list of matching positions.
 fn update_blanks(blanks: &mut Vec<String>, letter: char, indexes: Option<Vec<usize>>) {
     if let Some(index_list) = indexes {
         for &index in index_list.iter() {
@@ -147,6 +196,14 @@ fn update_blanks(blanks: &mut Vec<String>, letter: char, indexes: Option<Vec<usi
     }
 }
 
+/// Checks whether the player has revealed all letters (win condition).
+///
+/// # Parameters
+/// - `blanks`: Vector containing revealed and unrevealed letters.
+///
+/// # Returns
+/// - `true` if no underscores remain.
+/// - `false` otherwise.
 fn check_win(blanks: &Vec<String>) -> bool {
     for letter in blanks {
         if letter == "_" {
@@ -157,10 +214,23 @@ fn check_win(blanks: &Vec<String>) -> bool {
     true
 }
 
+/// Displays the ASCII hangman stage based on remaining lives.
+///
+/// # Parameters
+/// - `life_index`: Index into `STAGES` array.
 fn display_lives(life_index: usize) {
     println!("{}", STAGES.get(life_index).unwrap_or(&""));
 }
 
+/// Continuously prompts the user for a **single alphabetic character**.
+///
+/// # Behavior
+/// - Loops until user enters exactly one character.
+/// - Ensures input is alphabetic.
+/// - Returns lowercase form.
+///
+/// # Returns
+/// - A valid alphabetic `char`.
 fn get_user_input() -> char {
     loop {
         println!("Enter a letter: ");
@@ -185,6 +255,13 @@ fn get_user_input() -> char {
     }
 }
 
+/// Generates a random valid index for a vector of words.
+///
+/// # Parameters
+/// - `words`: A vector of candidate words.
+///
+/// # Returns
+/// - A random index between 0 and `words.len() - 1`.
 fn generate_rand_index(words: &Vec<String>) -> usize {
     let mut rng = rand::rng();
 
@@ -192,6 +269,14 @@ fn generate_rand_index(words: &Vec<String>) -> usize {
     rand_index
 }
 
+/// Allows the user to pick a category and randomly selects a word from that category.
+///
+/// # Parameters
+/// - `word_bank`: Map of category → word list.
+/// - `chosen_category`: Mutable reference to store selected category.
+///
+/// # Returns
+/// - A random word from the chosen category.
 fn get_word(word_bank: &HashMap<String, Vec<String>>, chosen_category: &mut String) -> String {
     for (i, key) in word_bank.keys().enumerate() {
         println!("{}: {}", i + 1, key);
@@ -227,10 +312,30 @@ fn get_word(word_bank: &HashMap<String, Vec<String>>, chosen_category: &mut Stri
     }
 }
 
+/// Checks whether a letter was already guessed by the player.
+///
+/// # Parameters
+/// - `picked_vec`: HashSet of previously picked letters.
+/// - `letter`: The current guess.
+///
+/// # Returns
+/// - `true` if already guessed.
+/// - `false` otherwise.
 fn check_if_letter_is_picked(picked_vec: &HashSet<char>, letter: char) -> bool {
     picked_vec.contains(&letter)
 }
 
+/// Core game loop for hangman.
+///
+/// # Behavior
+/// - Prompts category selection.
+/// - Picks random word.
+/// - Tracks guessed letters and lives.
+/// - Updates blanks and lives.
+/// - Detects win or loss.
+///
+/// # Parameters
+/// - `word_bank`: Map of categories to word lists.
 fn play_game(word_bank: &HashMap<String, Vec<String>>) {
     let mut chosen_category = String::new();
     let mut picked: HashSet<char> = HashSet::new();
@@ -282,6 +387,12 @@ fn play_game(word_bank: &HashMap<String, Vec<String>>) {
     }
 }
 
+/// Entry point of the application.
+///
+/// # Behavior
+/// - Loads words from file.
+/// - Displays menu.
+/// - Runs game or exits program.
 fn main() {
     let mut word_bank: HashMap<String, Vec<String>> = HashMap::new();
 
