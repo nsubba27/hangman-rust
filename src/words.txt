@@ -1,0 +1,54 @@
+category,word
+animal, tiger
+animal, dolphin
+animal, eagle
+animal, kangaroo
+animal, panda
+
+fruit, apple
+fruit, banana
+fruit, mango
+fruit, kiwi
+fruit, strawberry
+
+color, red
+color, blue
+color, green
+color, purple
+color, orange
+
+country, japan
+country, brazil
+country, canada
+country, egypt
+country, france
+
+sport, soccer
+sport, basketball
+sport, tennis
+sport, swimming
+sport, baseball
+
+food, pizza
+food, sushi
+food, taco
+food, burger
+food, pasta
+
+profession, doctor
+profession, engineer
+profession, teacher
+profession, pilot
+profession, lawyer
+
+object, laptop
+object, camera
+object, bicycle
+object, umbrella
+object, backpack
+
+emotion, happy
+emotion, angry
+emotion, surprised
+emotion, calm
+emotion, excited
